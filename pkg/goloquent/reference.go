@@ -41,9 +41,9 @@ func (r *Reference) OnDelete(action ReferenceAction) *Reference {
 
 // Verbose is a function for print schema reference detail
 func (r *Reference) Verbose() {
-	fmt.Printf("  Key           : %v\n", r.key)
-	fmt.Printf("  Related Table : %v\n", r.relatedTable)
-	fmt.Printf("  Related Key   : %v\n", r.relatedKey)
-	fmt.Printf("  OnUpdate      : %v\n", r.onUpdate)
-	fmt.Printf("  OnDelete      : %v\n", r.onDelete)
+	fmt.Printf("    Key           : %v\n", r.key)
+	fmt.Printf("    Related Table : %v\n", r.relatedTable)
+	fmt.Printf("    Related Key   : %v\n", r.relatedKey)
+	fmt.Printf("    OnUpdate      : %v\n", r.onUpdate)
+	fmt.Printf("    OnDelete      : %v\n", r.onDelete)
 }

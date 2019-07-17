@@ -190,9 +190,9 @@ func (s *Schema) Verbose() {
 	fmt.Printf("Indexes     : %v\n", s.indexes)
 	fmt.Printf("References  : [\n")
 	for _, v := range s.references {
-		fmt.Println("{")
+		fmt.Println("  {")
 		v.Verbose()
-		fmt.Println("}")
+		fmt.Println("  }")
 	}
 	fmt.Println("]")
 	fmt.Println("----------------------------------------")

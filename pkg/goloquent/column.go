@@ -26,6 +26,8 @@ func newColumn(name string, dt DataType) *Column {
 // PrimaryKey is a setter for primary key
 func (c *Column) PrimaryKey() *Column {
 	c.primaryKey = true
+	c.NotNull()
+	c.Unique()
 
 	return c
 }

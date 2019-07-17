@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 
+	"github.com/fwidjaya20/goloquent/config"
 	"github.com/fwidjaya20/goloquent/example/migration"
+	"github.com/fwidjaya20/goloquent/pkg/goloquent"
 )
 
 func main() {
@@ -14,11 +16,14 @@ func main() {
 }
 
 func migrationSample() {
-	fmt.Println("\n\nRunning Migration")
-
 	fmt.Println("========================================")
 	for _, v := range migration.Migration1.Schema {
 		v.Verbose()
 		fmt.Println("========================================")
 	}
+
+	goloquent.Migrate(config.GetDB(), "goloquent", true,
+		migration.Migration1,
+		migration.Migration2,
+	)
 }
