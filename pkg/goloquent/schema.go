@@ -231,6 +231,11 @@ func (s *Schema) DropTimestamp() {
 	s.drops = append(s.drops, "created_at", "updated_at")
 }
 
+// DropSoftDelete is a Schema Command for Drop Schema Timestamp
+func (s *Schema) DropSoftDelete() {
+	s.drops = append(s.drops, "deleted_at")
+}
+
 // Verbose is a function for print schema detail
 func (s *Schema) Verbose() {
 	fmt.Printf("Name        : %v\n", s.name)

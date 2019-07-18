@@ -69,8 +69,9 @@ func (b *Builder) BuildAlterTable(schema *Schema) string {
 		query = append(query, addColumn)
 	}
 
-	if len(schema.columns) > 0 {
-		modifyColumn := fmt.Sprintf("ALTER TABLE %s %s;", schema.name, b.buildModifyColumnQuery(schema.columns...))
+	modifyColumn := b.buildModifyColumnQuery(schema.columns...)
+	if "" != modifyColumn {
+		modifyColumn = fmt.Sprintf("ALTER TABLE %s %s;", schema.name, modifyColumn)
 
 		query = append(query, modifyColumn)
 	}
