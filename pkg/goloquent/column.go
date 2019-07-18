@@ -4,12 +4,14 @@ import "fmt"
 
 // Column is a struct that is used for store information about table column
 type Column struct {
+	oldName      string // for renaming column
 	name         string
 	dataType     DataType
 	defaultValue interface{}
 	primaryKey   bool
 	nullable     bool
 	unique       bool
+	modified     bool
 }
 
 func newColumn(name string, dt DataType) *Column {
@@ -20,14 +22,20 @@ func newColumn(name string, dt DataType) *Column {
 		primaryKey:   false,
 		unique:       false,
 		nullable:     true,
+		modified:     false,
+	}
+}
+
+func renameColumn(from string, to string) *Column {
+	return &Column{
+		oldName: from,
+		name:    to,
 	}
 }
 
 // PrimaryKey is a setter for primary key
 func (c *Column) PrimaryKey() *Column {
 	c.primaryKey = true
-	c.NotNull()
-	c.Unique()
 
 	return c
 }
@@ -60,6 +68,13 @@ func (c *Column) AutoIncrement() *Column {
 // DefaultValue is a setter for default value
 func (c *Column) DefaultValue(v interface{}) *Column {
 	c.defaultValue = v
+
+	return c
+}
+
+// Change is a setter for modify column
+func (c *Column) Change() *Column {
+	c.modified = true
 
 	return c
 }

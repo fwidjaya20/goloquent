@@ -56,6 +56,18 @@ func isTableExist(db *sqlx.DB, table string) bool {
 	return true
 }
 
+func isColumnExist(db *sqlx.DB, table string, column string) bool {
+	query := fmt.Sprintf("SELECT %s FROM %s", column, table)
+
+	_, err := db.Exec(query)
+
+	if nil != err {
+		return false
+	}
+
+	return true
+}
+
 func seedMetaTable(tx *sqlx.Tx, blueprint *Schema, batch int) {
 	var query string
 
