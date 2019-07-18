@@ -10,6 +10,8 @@ var Migration2 = goloquent.Migration{
 			table.Serial("movie_id")
 			table.SmallInteger("rate")
 
+			table.Timestamp()
+
 			table.Foreign("movie_id").
 				Reference("id").
 				On("movies").

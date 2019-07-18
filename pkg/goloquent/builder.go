@@ -59,6 +59,50 @@ func (b *Builder) BuildCreateTable(blueprint *Schema) string {
 	return query
 }
 
+// BuildAlterTable .
+func (b *Builder) BuildAlterTable(schema *Schema) string {
+	var query []string
+
+	if len(schema.columns) > 0 {
+		addColumn := fmt.Sprintf("ALTER TABLE %s %s;", schema.name, b.buildAddColumnQuery(schema.columns...))
+
+		query = append(query, addColumn)
+	}
+
+	if len(schema.columns) > 0 {
+		modifyColumn := fmt.Sprintf("ALTER TABLE %s %s;", schema.name, b.buildModifyColumnQuery(schema.columns...))
+
+		query = append(query, modifyColumn)
+	}
+
+	if len(schema.renames) > 0 {
+		var renameColumn string
+
+		renameColumn = fmt.Sprintf("ALTER TABLE %s %s;", schema.name, b.buildRenameColumnQuery(schema.renames...))
+
+		query = append(query, renameColumn)
+	}
+
+	if len(schema.drops) > 0 {
+		dropColumn := fmt.Sprintf("ALTER TABLE %s %s;", schema.name, b.buildDropColumnQuery(schema.drops...))
+
+		query = append(query, dropColumn)
+	}
+
+	return strings.Join(query, "\n")
+}
+
+// BuildDropTable .
+func (b *Builder) BuildDropTable(schema *Schema) string {
+	var query string
+
+	query = fmt.Sprintf("DROP TABLE IF EXISTS %s;", schema.name)
+
+	fmt.Println(query)
+
+	return query
+}
+
 func (b *Builder) buildColumnQuery(column *Column) string {
 	var query string
 
@@ -74,6 +118,10 @@ func (b *Builder) buildColumnQuery(column *Column) string {
 
 	if !column.nullable {
 		query = fmt.Sprintf("%s NOT NULL", query)
+	}
+
+	if nil != column.defaultValue {
+		query = fmt.Sprintf("%s DEFAULT '%v'", query, column.defaultValue)
 	}
 
 	return query
@@ -99,11 +147,56 @@ func (b *Builder) buildIndexQuery(blueprint *Schema) string {
 	var query string
 
 	query = fmt.Sprintf(
-		"CREATE INDEX %s_indexes ON %s (%s);\n",
+		"CREATE INDEX IF NOT EXISTS %s_indexes ON %s (%s);\n",
 		blueprint.name,
 		blueprint.name,
 		strings.Join(blueprint.indexes, ","),
 	)
 
 	return query
+}
+
+func (b *Builder) buildAddColumnQuery(columns ...*Column) string {
+	var query []string
+
+	for _, col := range columns {
+		if !col.modified {
+			query = append(query, fmt.Sprintf("ADD COLUMN IF NOT EXISTS %s", b.buildColumnQuery(col)))
+		}
+	}
+
+	return strings.Join(query, ",")
+}
+
+func (b *Builder) buildModifyColumnQuery(columns ...*Column) string {
+	var query []string
+
+	for _, col := range columns {
+		if col.modified {
+			query = append(query, fmt.Sprintf("ALTER COLUMN %s DROP DEFAULT", col.name))
+			query = append(query, fmt.Sprintf("ALTER COLUMN %s TYPE %s USING %s::%s", col.name, col.dataType, col.name, col.dataType))
+		}
+	}
+
+	return strings.Join(query, ",")
+}
+
+func (b *Builder) buildRenameColumnQuery(columns ...*Column) string {
+	var query []string
+
+	for _, col := range columns {
+		query = append(query, fmt.Sprintf("RENAME COLUMN %s TO %s", col.oldName, col.name))
+	}
+
+	return strings.Join(query, ",")
+}
+
+func (b *Builder) buildDropColumnQuery(columns ...string) string {
+	var query []string
+
+	for _, col := range columns {
+		query = append(query, fmt.Sprintf("DROP COLUMN %s", col))
+	}
+
+	return strings.Join(query, ",")
 }

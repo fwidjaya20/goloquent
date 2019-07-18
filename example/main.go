@@ -16,14 +16,15 @@ func main() {
 }
 
 func migrationSample() {
-	fmt.Println("========================================")
-	for _, v := range migration.Migration1.Schema {
-		v.Verbose()
-		fmt.Println("========================================")
-	}
+	// fmt.Println("========================================")
+	// for _, v := range migration.Migration1.Schema {
+	// 	v.Verbose()
+	// 	fmt.Println("========================================")
+	// }
 
-	goloquent.Migrate(config.GetDB(), "goloquent", true,
+	goloquent.Migrate(config.GetDB(), "goloquent",
 		migration.Migration1,
 		migration.Migration2,
+		migration.Migration3,
 	)
 }
