@@ -5,6 +5,7 @@ import (
 
 	"github.com/fwidjaya20/goloquent/config"
 	"github.com/fwidjaya20/goloquent/example/migration"
+	"github.com/fwidjaya20/goloquent/example/migration/seeder"
 	"github.com/fwidjaya20/goloquent/example/model"
 	"github.com/fwidjaya20/goloquent/pkg/goloquent"
 )
@@ -14,6 +15,8 @@ func main() {
 	fmt.Println("===============")
 
 	migrationSample()
+
+	seederSample()
 
 	insertSample()
 }
@@ -29,6 +32,12 @@ func migrationSample() {
 		migration.Migration1,
 		migration.Migration2,
 		migration.Migration3,
+	)
+}
+
+func seederSample() {
+	goloquent.Seeder(config.GetDB(), "goloquent",
+		seeder.GendreSeeder(),
 	)
 }
 
