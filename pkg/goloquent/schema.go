@@ -7,6 +7,8 @@ type Schema struct {
 	command     Command
 	name        string
 	columns     []*Column
+	renames     []*Column
+	drops       []string
 	primaryKeys []string
 	references  []*Reference
 	uniques     []string
@@ -23,6 +25,26 @@ func Create(name string, blueprint func(blueprint *Schema)) *Schema {
 	blueprint(schema)
 
 	return schema
+}
+
+// Table is a command for alter a table
+func Table(name string, blueprint func(blueprint *Schema)) *Schema {
+	schema := &Schema{
+		command: CMD_ALTER,
+		name:    name,
+	}
+
+	blueprint(schema)
+
+	return schema
+}
+
+// Drop is a command for drop a table
+func Drop(name string) *Schema {
+	return &Schema{
+		command: CMD_DROP,
+		name:    name,
+	}
 }
 
 // SmallInteger is a Schema Command for create Schema Column
@@ -182,6 +204,38 @@ func (s *Schema) TimestampTz() {
 	s.addColumn(newColumn("updated_at", DT_TIMESTAMPTZ))
 }
 
+// SoftDelete is a Schema Command for create Schema 'deleted_at' olumn
+func (s *Schema) SoftDelete() {
+	s.addColumn(newColumn("deleted_at", DT_TIMESTAMP))
+}
+
+// SoftDeleteTz is a Schema Command for create Schema 'deleted_at' olumn
+func (s *Schema) SoftDeleteTz() {
+	s.addColumn(newColumn("deleted_at", DT_TIMESTAMPTZ))
+}
+
+// Rename is a Schema Command for Renaming Schema Column
+func (s *Schema) Rename(from string, to string) {
+	col := renameColumn(from, to)
+
+	s.addRenameColumn(col)
+}
+
+// Drop is a Schema Command for Drop Schema columns
+func (s *Schema) Drop(column ...string) {
+	s.drops = column
+}
+
+// DropTimestamp is a Schema Command for Drop Schema Timestamp
+func (s *Schema) DropTimestamp() {
+	s.drops = append(s.drops, "created_at", "updated_at")
+}
+
+// DropSoftDelete is a Schema Command for Drop Schema Timestamp
+func (s *Schema) DropSoftDelete() {
+	s.drops = append(s.drops, "deleted_at")
+}
+
 // Verbose is a function for print schema detail
 func (s *Schema) Verbose() {
 	fmt.Printf("Name        : %v\n", s.name)
@@ -190,9 +244,9 @@ func (s *Schema) Verbose() {
 	fmt.Printf("Indexes     : %v\n", s.indexes)
 	fmt.Printf("References  : [\n")
 	for _, v := range s.references {
-		fmt.Println("{")
+		fmt.Println("  {")
 		v.Verbose()
-		fmt.Println("}")
+		fmt.Println("  }")
 	}
 	fmt.Println("]")
 	fmt.Println("----------------------------------------")
@@ -204,6 +258,12 @@ func (s *Schema) Verbose() {
 
 func (s *Schema) addColumn(col *Column) *Column {
 	s.columns = append(s.columns, col)
+
+	return col
+}
+
+func (s *Schema) addRenameColumn(col *Column) *Column {
+	s.renames = append(s.renames, col)
 
 	return col
 }

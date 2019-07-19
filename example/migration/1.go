@@ -24,6 +24,8 @@ var Migration1 = goloquent.Migration{
 				On("genres").
 				OnUpdate(goloquent.RA_CASCADE).
 				OnDelete(goloquent.RA_RESTRICT)
+
+			table.Index("id", "title", "year", "director")
 		}),
 	},
 }
