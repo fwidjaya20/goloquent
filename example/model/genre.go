@@ -12,6 +12,6 @@ type Genre struct {
 // GenreModel .
 func GenreModel() *Genre {
 	return &Genre{
-		Model: goloquent.Model{},
+		Model: goloquent.AutoIncrementModel("genres", "id", true, false),
 	}
 }
