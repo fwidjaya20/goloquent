@@ -5,6 +5,7 @@ import (
 
 	"github.com/fwidjaya20/goloquent/config"
 	"github.com/fwidjaya20/goloquent/example/migration"
+	"github.com/fwidjaya20/goloquent/example/model"
 	"github.com/fwidjaya20/goloquent/pkg/goloquent"
 )
 
@@ -12,7 +13,9 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	migrationSample()
+	// migrationSample()
+
+	modelSample()
 }
 
 func migrationSample() {
@@ -27,4 +30,15 @@ func migrationSample() {
 		migration.Migration2,
 		migration.Migration3,
 	)
+}
+
+func modelSample() {
+	query := goloquent.DB(config.GetDB())
+
+	genre := model.GenreModel()
+
+	genre.ID = 1
+	genre.Name = "Action"
+
+	query.Use(genre)
 }
