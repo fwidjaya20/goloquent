@@ -44,3 +44,9 @@ const (
 	RA_RESTRICT  ReferenceAction = "RESTRICT"
 	RA_CASCADE   ReferenceAction = "CASCADE"
 )
+
+const (
+	CREATED_AT = "created_at"
+	UPDATED_AT = "updated_at"
+	DELETED_AT = "deleted_at"
+)

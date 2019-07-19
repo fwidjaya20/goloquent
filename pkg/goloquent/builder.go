@@ -104,6 +104,51 @@ func (b *Builder) BuildDropTable(schema *Schema) string {
 	return query
 }
 
+// BuildInsert .
+func (b *Builder) BuildInsert(model IModel, returning ...string) string {
+	var query string
+
+	query = fmt.Sprintf("%sINSERT INTO %s ", query, model.GetTableName())
+	query = fmt.Sprintf("%s(%s) ", query, b.buildInsertColumnOrValue(model, b.isAutoIncrementPrimaryKey, b.buildInsertColumns))
+	query = fmt.Sprintf("%sVALUES (%s) ", query, b.buildInsertColumnOrValue(model, b.isAutoIncrementPrimaryKey, b.buildInsertValue))
+
+	if len(returning) < 1 {
+		returning = append(returning, model.GetPK())
+	}
+
+	query = fmt.Sprintf("%sRETURNING \"%s\";\n", query, strings.Join(returning, `", "`))
+
+	return query
+}
+
+// BuildBulkInsert .
+func (b *Builder) BuildBulkInsert(model IModel, data []interface{}, returning ...string) string {
+	var query string
+
+	query = fmt.Sprintf("%sINSERT INTO %s ", query, model.GetTableName())
+	query = fmt.Sprintf("%s(%s) ", query, b.buildInsertColumnOrValue(model, b.isAutoIncrementPrimaryKey, b.buildInsertColumns))
+	query = fmt.Sprintf("%sVALUES ", query)
+
+	first := true
+	for i, v := range data {
+		if first {
+			first = false
+		} else {
+			query = fmt.Sprintf("%s, ", query)
+		}
+
+		query = b.buildInsertBulkValue(query, v.(IModel), i)
+	}
+
+	if len(returning) < 1 {
+		returning = append(returning, model.GetPK())
+	}
+
+	query = fmt.Sprintf("%s RETURNING \"%s\";\n", query, strings.Join(returning, `", "`))
+
+	return query
+}
+
 func (b *Builder) buildColumnQuery(column *Column) string {
 	var query string
 
@@ -200,4 +245,78 @@ func (b *Builder) buildDropColumnQuery(columns ...string) string {
 	}
 
 	return strings.Join(query, ",")
+}
+
+// isAutoIncrementPrimaryKey is a function that will skip id column if model is autoincrement when building query
+func (b *Builder) isAutoIncrementPrimaryKey(column string, model IModel) bool {
+	return column == model.GetPK() && !model.IsUuid() && model.IsAutoIncrement()
+}
+
+// buildInsertColumnOrValue is a decorator function to wrap creational of columns or values
+func (b *Builder) buildInsertColumnOrValue(
+	model IModel,
+	skipFunc func(column string, model IModel) bool,
+	generator func(query string, column string, hasComma bool) (string, bool),
+) string {
+	var query string
+	hasComma := true
+
+	columns := model.GetColumns(model)
+
+	if model.IsTimestamp() {
+		columns = append(columns, "created_at", "updated_at")
+	}
+
+	if model.IsSoftDelete() {
+		columns = append(columns, "deleted_at")
+	}
+
+	for _, col := range columns {
+		if !skipFunc(col, model) {
+			query, hasComma = generator(query, col, hasComma)
+		}
+	}
+
+	return query
+}
+
+func (b *Builder) buildInsertColumns(query string, column string, hasComma bool) (string, bool) {
+	if hasComma {
+		hasComma = false
+	} else {
+		query = fmt.Sprintf("%s, ", query)
+	}
+
+	return fmt.Sprintf(`%s"%s"`, query, column), hasComma
+}
+
+func (b *Builder) buildInsertValue(query string, column string, hasComma bool) (string, bool) {
+	if hasComma {
+		hasComma = false
+	} else {
+		query = fmt.Sprintf("%s, ", query)
+	}
+
+	return fmt.Sprintf(`%s:%s`, query, column), hasComma
+}
+
+func (b *Builder) buildInsertBulkValue(query string, model IModel, i int) string {
+	columns := model.GetColumns(model)
+
+	if model.IsTimestamp() {
+		columns = append(columns, "created_at", "updated_at")
+	}
+
+	if model.IsSoftDelete() {
+		columns = append(columns, "deleted_at")
+	}
+
+	var qCol []string
+	for _, col := range columns {
+		if !b.isAutoIncrementPrimaryKey(col, model) {
+			qCol = append(qCol, fmt.Sprintf(":%d%s", i, col))
+		}
+	}
+
+	return fmt.Sprintf(`%s(%s)`, query, strings.Join(qCol, ", "))
 }
