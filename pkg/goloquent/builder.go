@@ -356,11 +356,11 @@ func (b *Builder) buildQueryCondition(table string, binding Binding) string {
 
 	for i, w := range binding.Conditions {
 		switch w.Operator {
-		case IN:
+		case IN, NOT_IN:
 			if 0 == i {
-				query = fmt.Sprintf(`%s"%s"."%s" IN (%v)`, query, table, w.Column, b.buildWhereInValues(w.Value))
+				query = fmt.Sprintf(`%s"%s"."%s" %s (%v)`, query, table, w.Column, w.Operator, b.buildWhereInValues(w.Value))
 			} else {
-				query = fmt.Sprintf(`%s%s "%s"."%s" IN (%v)`, query, w.Connector, table, w.Column, b.buildWhereInValues(w.Value))
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s (%v)`, query, w.Connector, table, w.Column, w.Operator, b.buildWhereInValues(w.Value))
 			}
 		default:
 			if 0 == i {
