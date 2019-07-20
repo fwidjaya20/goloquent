@@ -9,6 +9,12 @@ type Command string
 // ReferenceAction is a replica of string type that used for store relationship action
 type ReferenceAction string
 
+// Condition is a replica of string type that used for store condition operator
+type Operator string
+
+// Connector is a replica of string type that used for connecting between condition
+type Connector string
+
 const (
 	CMD_CREATE Command = "CREATE"
 	CMD_ALTER  Command = "ALTER"
@@ -49,4 +55,23 @@ const (
 	CREATED_AT = "created_at"
 	UPDATED_AT = "updated_at"
 	DELETED_AT = "deleted_at"
+)
+
+const (
+	AND Connector = "AND"
+	OR  Connector = "OR"
+)
+
+const (
+	EQUAL                 Operator = "="
+	NOT_EQUAL             Operator = "!="
+	LESS_THAN             Operator = "<"
+	GREATER_THAN          Operator = ">"
+	LESS_THAN_OR_EQUAL    Operator = "<="
+	GREATER_THAN_OR_EQUAL Operator = ">="
+	LIKE                  Operator = "LIKE"
+	ILIKE                 Operator = "ILIKE"
+	NOT_LIKE              Operator = "NOT LIKE"
+	IN                    Operator = "IN"
+	NOT_IN                Operator = "NOT IN"
 )
