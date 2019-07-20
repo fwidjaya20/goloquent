@@ -2,6 +2,7 @@ package goloquent
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 )
@@ -100,6 +101,23 @@ func (b *Builder) BuildDropTable(schema *Schema) string {
 	query = fmt.Sprintf("DROP TABLE IF EXISTS %s;", schema.name)
 
 	fmt.Println(query)
+
+	return query
+}
+
+// BuildSelect .
+func (b *Builder) BuildSelect(model IModel, binding Binding) string {
+	var query string
+	var selectColumns string
+
+	selectComma := true
+	for _, col := range model.GetColumns(model) {
+		selectColumns, selectComma = b.buildSelectColumns(selectColumns, model.GetTableName(), col, selectComma)
+	}
+
+	query = fmt.Sprintf(`%sSELECT %s `, query, selectColumns)
+	query = fmt.Sprintf(`%sFROM "%s" `, query, model.GetTableName())
+	query = fmt.Sprintf(`%sWHERE %s `, query, b.buildQueryCondition(model.GetTableName(), binding))
 
 	return query
 }
@@ -319,4 +337,57 @@ func (b *Builder) buildInsertBulkValue(query string, model IModel, i int) string
 	}
 
 	return fmt.Sprintf(`%s(%s)`, query, strings.Join(qCol, ", "))
+}
+
+func (b *Builder) buildSelectColumns(query string, table string, column string, hasComma bool) (string, bool) {
+	if hasComma {
+		hasComma = false
+	} else {
+		query = fmt.Sprintf("%s, ", query)
+	}
+
+	query = fmt.Sprintf(`%s"%s"."%s"`, query, table, column)
+
+	return query, hasComma
+}
+
+func (b *Builder) buildQueryCondition(table string, binding Binding) string {
+	var query string
+
+	for i, w := range binding.Conditions {
+		switch w.Operator {
+		case IN:
+			if 0 == i {
+				query = fmt.Sprintf(`%s"%s"."%s" IN (%v)`, query, table, w.Column, b.buildWhereInValues(w.Value))
+			} else {
+				query = fmt.Sprintf(`%s%s "%s"."%s" IN (%v)`, query, w.Connector, table, w.Column, b.buildWhereInValues(w.Value))
+			}
+		default:
+			if 0 == i {
+				query = fmt.Sprintf(`%s"%s"."%s" %s '%s' `, query, table, w.Column, w.Operator, w.Value)
+			} else {
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s '%s' `, query, w.Connector, table, w.Column, w.Operator, w.Value)
+			}
+		}
+	}
+
+	return query
+}
+
+func (b *Builder) buildWhereInValues(value interface{}) string {
+	var query string
+
+	items := reflect.ValueOf(value)
+
+	if reflect.Slice == items.Kind() {
+		for i := 0; i < items.Len(); i++ {
+			if items.Len()-1 == i {
+				query = fmt.Sprintf(`%s'%v'`, query, items.Index(i))
+			} else {
+				query = fmt.Sprintf(`%s'%v',`, query, items.Index(i))
+			}
+		}
+	}
+
+	return query
 }

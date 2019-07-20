@@ -16,6 +16,7 @@ type Query struct {
 	DB      *sqlx.DB
 	Tx      *sqlx.Tx
 	Model   IModel
+	Binding Binding
 }
 
 // DB .
@@ -32,6 +33,62 @@ func (q *Query) Use(model IModel) *Query {
 
 	return q
 }
+
+// Where .
+func (q *Query) Where(key string, op Operator, value interface{}) *Query {
+	cond := newCondition(AND, key, op, value)
+
+	q.Binding.Conditions = append(q.Binding.Conditions, cond)
+
+	return q
+}
+
+// OrWhere .
+func (q *Query) OrWhere(key string, op Operator, value interface{}) *Query {
+	cond := newCondition(OR, key, op, value)
+
+	q.Binding.Conditions = append(q.Binding.Conditions, cond)
+
+	return q
+}
+
+// WhereIn .
+func (q *Query) WhereIn(key string, value interface{}) *Query {
+	cond := newCondition(AND, key, IN, value)
+
+	q.Binding.Conditions = append(q.Binding.Conditions, cond)
+
+	return q
+}
+
+// Except .
+func (q *Query) Except(key string, value interface{}) *Query {
+	cond := newCondition(AND, key, NOT_IN, value)
+
+	q.Binding.Conditions = append(q.Binding.Conditions, cond)
+
+	return q
+}
+
+// Get .
+func (q *Query) Get() (interface{}, error) {
+	results, err := q.makeSliceOf(q.Model)
+
+	if nil != err {
+		return nil, err
+	}
+
+	query := q.Builder.BuildSelect(q.Model, q.Binding)
+
+	err = q.DB.Select(results, query)
+
+	return q.mapToSliceModel(results), err
+}
+
+// First .
+// All .
+// Last .
+// Paginate .
 
 // Insert .
 func (q *Query) Insert(returning ...string) (sql.Result, error) {
@@ -189,4 +246,16 @@ func (q *Query) bulkPayload(data []interface{}) map[string]interface{} {
 	}
 
 	return payloads
+}
+
+func (q *Query) makeSliceOf(sample interface{}) (interface{}, error) {
+	if reflect.TypeOf(sample).Kind() != reflect.Ptr {
+		return nil, errors.New("sample must be a pointer to reference model")
+	}
+	element := reflect.TypeOf(sample)
+	return reflect.New(reflect.SliceOf(element)).Interface(), nil
+}
+
+func (q *Query) mapToSliceModel(slice interface{}) interface{} {
+	return reflect.ValueOf(slice).Elem().Interface()
 }
