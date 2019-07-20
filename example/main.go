@@ -14,11 +14,11 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	// migrationSample()
+	migrationSample()
 
-	// seederSample()
+	seederSample()
 
-	// insertSample()
+	insertSample()
 
 	selectSample()
 }
