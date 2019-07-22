@@ -117,7 +117,18 @@ func (b *Builder) BuildSelect(model IModel, binding Binding) string {
 
 	query = fmt.Sprintf(`%sSELECT %s `, query, selectColumns)
 	query = fmt.Sprintf(`%sFROM "%s" `, query, model.GetTableName())
-	query = fmt.Sprintf(`%sWHERE %s `, query, b.buildQueryCondition(model.GetTableName(), binding))
+
+	if len(binding.Conditions) > 0 {
+		query = fmt.Sprintf(`%sWHERE %s `, query, b.buildQueryCondition(model.GetTableName(), binding))
+	}
+
+	if binding.Limit > 0 {
+		query = fmt.Sprintf(`%sLIMIT %d `, query, binding.Limit)
+	}
+
+	if binding.Offset > 0 {
+		query = fmt.Sprintf(`%sOFFSET %d;`, query, binding.Offset)
+	}
 
 	return query
 }
@@ -358,15 +369,15 @@ func (b *Builder) buildQueryCondition(table string, binding Binding) string {
 		switch w.Operator {
 		case IN, NOT_IN:
 			if 0 == i {
-				query = fmt.Sprintf(`%s"%s"."%s" %s (%v)`, query, table, w.Column, w.Operator, b.buildWhereInValues(w.Value))
+				query = fmt.Sprintf(`%s"%s"."%s" %s (:%d%s)`, query, table, w.Column, w.Operator, i, w.Column)
 			} else {
-				query = fmt.Sprintf(`%s%s "%s"."%s" %s (%v)`, query, w.Connector, table, w.Column, w.Operator, b.buildWhereInValues(w.Value))
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s (:%d%s)`, query, w.Connector, table, w.Column, w.Operator, i, w.Column)
 			}
 		default:
 			if 0 == i {
-				query = fmt.Sprintf(`%s"%s"."%s" %s '%s' `, query, table, w.Column, w.Operator, w.Value)
+				query = fmt.Sprintf(`%s"%s"."%s" %s :%d%s `, query, table, w.Column, w.Operator, i, w.Column)
 			} else {
-				query = fmt.Sprintf(`%s%s "%s"."%s" %s '%s' `, query, w.Connector, table, w.Column, w.Operator, w.Value)
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s :%d%s `, query, w.Connector, table, w.Column, w.Operator, i, w.Column)
 			}
 		}
 	}
