@@ -70,25 +70,70 @@ func (q *Query) Except(key string, value interface{}) *Query {
 	return q
 }
 
+// ToSQL .
+func (q *Query) ToSQL() string {
+	return q.Builder.BuildSelect(q.Model, q.Binding)
+}
+
+// All .
+func (q *Query) All() (interface{}, error) {
+	q.resetBindings()
+
+	return q.Get()
+}
+
 // Get .
 func (q *Query) Get() (interface{}, error) {
+	defer q.resetBindings()
+
 	results, err := q.makeSliceOf(q.Model)
 
 	if nil != err {
 		return nil, err
 	}
 
-	query := q.Builder.BuildSelect(q.Model, q.Binding)
+	stmt, args, err := q.prepareNamed(q.ToSQL())
 
-	err = q.DB.Select(results, query)
+	fmt.Println(q.ToSQL())
+
+	err = stmt.Select(results, args)
 
 	return q.mapToSliceModel(results), err
 }
 
 // First .
-// All .
-// Last .
+func (q *Query) First() (interface{}, error) {
+	defer q.resetBindings()
+
+	q.Binding.Limit = 1
+
+	result, err := q.makeTypeOf(q.Model)
+
+	if nil != err {
+		return nil, err
+	}
+
+	stmt, args, err := q.prepareNamed(q.ToSQL())
+
+	err = stmt.Get(result, args)
+
+	return reflect.ValueOf(result).Interface(), err
+}
+
 // Paginate .
+func (q *Query) Paginate(page int, limit ...int) (interface{}, error) {
+	defer q.resetBindings()
+
+	if len(limit) > 0 {
+		q.Binding.Limit = limit[0]
+	} else {
+		q.Binding.Limit = 50
+	}
+
+	q.Binding.Offset = (page - 1) * q.Binding.Limit
+
+	return q.Get()
+}
 
 // Insert .
 func (q *Query) Insert(returning ...string) (sql.Result, error) {
@@ -252,10 +297,44 @@ func (q *Query) makeSliceOf(sample interface{}) (interface{}, error) {
 	if reflect.TypeOf(sample).Kind() != reflect.Ptr {
 		return nil, errors.New("sample must be a pointer to reference model")
 	}
+
 	element := reflect.TypeOf(sample)
+
 	return reflect.New(reflect.SliceOf(element)).Interface(), nil
+}
+
+func (q *Query) makeTypeOf(sample interface{}) (interface{}, error) {
+	if reflect.TypeOf(sample).Kind() != reflect.Ptr {
+		return nil, errors.New("sample must be a pointer to reference model")
+	}
+
+	element := reflect.TypeOf(sample).Elem()
+
+	return reflect.New(element).Interface(), nil
 }
 
 func (q *Query) mapToSliceModel(slice interface{}) interface{} {
 	return reflect.ValueOf(slice).Elem().Interface()
+}
+
+func (q *Query) resetBindings() {
+	q.Binding = Binding{}
+}
+
+func (q *Query) prepareNamed(query string) (*sqlx.NamedStmt, map[string]interface{}, error) {
+	stmt, err := q.DB.PrepareNamed(query)
+
+	return stmt, q.mapConditionPayload(), err
+}
+
+func (q *Query) mapConditionPayload() map[string]interface{} {
+	payload := make(map[string]interface{}, len(q.Binding.Conditions))
+
+	for i, v := range q.Binding.Conditions {
+		key := fmt.Sprintf("%d%s", i, v.Column)
+
+		payload[key] = v.Value
+	}
+
+	return payload
 }

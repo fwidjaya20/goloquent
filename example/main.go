@@ -14,11 +14,11 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	migrationSample()
+	// migrationSample()
 
-	seederSample()
+	// seederSample()
 
-	insertSample()
+	// insertSample()
 
 	selectSample()
 }
@@ -147,8 +147,16 @@ func selectSample() {
 
 	m := model.GenreModel()
 
+	// getStmt(query, m)
+	// allStmt(query, m)
+	// firstStmt(query, m)
+	paginateStmt(query, m)
+}
+
+func getStmt(query *goloquent.Query, m goloquent.IModel) {
 	genres, err := query.Use(m).
-		WhereIn("id", []int{1, 2, 4, 5}).
+		Where("name", goloquent.ILIKE, "%bulk%").
+		OrWhere("id", "=", 1).
 		Get()
 
 	if nil != err {
@@ -156,12 +164,72 @@ func selectSample() {
 		return
 	}
 
+	fmt.Println("GET - Statement")
 	for i, v := range genres.([]*model.Genre) {
 		fmt.Printf("Genre #%02d\n", i+1)
 		fmt.Println("==========")
 		fmt.Printf("ID   : %d\n", v.ID)
 		fmt.Printf("Name : %s\n", v.Name)
 		fmt.Println("==========")
+	}
+}
 
+func allStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		All()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("ALL - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func firstStmt(query *goloquent.Query, m goloquent.IModel) {
+	genre, err := query.Use(m).
+		First()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	v := genre.(*model.Genre)
+
+	fmt.Println("FIRST - Statement")
+	fmt.Printf("Genre #%02d\n", 1)
+	fmt.Println("==========")
+	fmt.Printf("ID   : %d\n", v.ID)
+	fmt.Printf("Name : %s\n", v.Name)
+	fmt.Println("==========")
+}
+
+func paginateStmt(query *goloquent.Query, m goloquent.IModel) {
+	currentPage := 3
+	limit := 10
+
+	genres, err := query.Use(m).
+		Paginate(currentPage, limit)
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Printf("PAGINATE (Page #%d, Limit %d) - Statement\n", currentPage, limit)
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
 	}
 }
