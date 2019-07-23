@@ -14,11 +14,11 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	// migrationSample()
+	migrationSample()
 
-	// seederSample()
+	seederSample()
 
-	// insertSample()
+	insertSample()
 
 	selectSample()
 }
@@ -147,10 +147,11 @@ func selectSample() {
 
 	m := model.GenreModel()
 
-	// getStmt(query, m)
-	// allStmt(query, m)
-	// firstStmt(query, m)
+	getStmt(query, m)
+	allStmt(query, m)
+	firstStmt(query, m)
 	paginateStmt(query, m)
+	aggregateStmt(query, m)
 }
 
 func getStmt(query *goloquent.Query, m goloquent.IModel) {
@@ -232,4 +233,31 @@ func paginateStmt(query *goloquent.Query, m goloquent.IModel) {
 		fmt.Printf("Name : %s\n", v.Name)
 		fmt.Println("==========")
 	}
+}
+
+func aggregateStmt(query *goloquent.Query, m goloquent.IModel) {
+	count := query.Use(m).Where("name", "ILIKE", "%bulk%").Count()
+
+	fmt.Println("COUNT - Aggregate Statement")
+	fmt.Printf("Total : %d\n", count)
+
+	max := query.Use(m).Where("name", "ILIKE", "%bulk%").Max("id")
+
+	fmt.Println("MAX - Aggregate Statement")
+	fmt.Printf("Max : %d\n", int64(max))
+
+	min := query.Use(m).Where("name", "ILIKE", "%bulk%").Min("id")
+
+	fmt.Println("MAX - Aggregate Statement")
+	fmt.Printf("Max : %d\n", int64(min))
+
+	avg := query.Use(m).Where("name", "ILIKE", "%bulk%").Avg("id")
+
+	fmt.Println("AVG - Aggregate Statement")
+	fmt.Printf("Avg : %d\n", int64(avg))
+
+	sum := query.Use(m).Where("name", "ILIKE", "%bulk%").Sum("id")
+
+	fmt.Println("SUM - Aggregate Statement")
+	fmt.Printf("Sum : %d\n", int64(sum))
 }

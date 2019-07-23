@@ -108,14 +108,22 @@ func (b *Builder) BuildDropTable(schema *Schema) string {
 // BuildSelect .
 func (b *Builder) BuildSelect(model IModel, binding Binding) string {
 	var query string
-	var selectColumns string
 
-	selectComma := true
-	for _, col := range model.GetColumns(model) {
-		selectColumns, selectComma = b.buildSelectColumns(selectColumns, model.GetTableName(), col, selectComma)
+	query = fmt.Sprintf("%sSELECT", query)
+
+	if nil != binding.Aggregate {
+		query = fmt.Sprintf("%s %s", query, b.buildSelectAggregate(binding.Aggregate.AggregateFunc, model.GetTableName(), binding.Aggregate.Column))
+	} else if len(model.GetColumns(model)) > 0 {
+		var selectColumns string
+
+		selectComma := true
+		for _, col := range model.GetColumns(model) {
+			selectColumns, selectComma = b.buildSelectColumns(selectColumns, model.GetTableName(), col, selectComma)
+		}
+
+		query = fmt.Sprintf("%s %s", query, selectColumns)
 	}
 
-	query = fmt.Sprintf(`%sSELECT %s `, query, selectColumns)
 	query = fmt.Sprintf(`%sFROM "%s" `, query, model.GetTableName())
 
 	if len(binding.Conditions) > 0 {
@@ -360,6 +368,14 @@ func (b *Builder) buildSelectColumns(query string, table string, column string, 
 	query = fmt.Sprintf(`%s"%s"."%s"`, query, table, column)
 
 	return query, hasComma
+}
+
+func (b *Builder) buildSelectAggregate(aggregateFn AggregateFunction, table string, column string) string {
+	if "*" == column {
+		return fmt.Sprintf(`%v("%s".%s) `, aggregateFn, table, column)
+	}
+
+	return fmt.Sprintf(`%v("%s"."%s") `, aggregateFn, table, column)
 }
 
 func (b *Builder) buildQueryCondition(table string, binding Binding) string {

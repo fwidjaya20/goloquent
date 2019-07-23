@@ -15,6 +15,9 @@ type Operator string
 // Connector is a replica of string type that used for connecting between condition
 type Connector string
 
+// AggregateFunction is a replica of string type that used for store Aggregate Function
+type AggregateFunction string
+
 const (
 	CMD_CREATE Command = "CREATE"
 	CMD_ALTER  Command = "ALTER"
@@ -74,4 +77,12 @@ const (
 	NOT_LIKE              Operator = "NOT LIKE"
 	IN                    Operator = "IN"
 	NOT_IN                Operator = "NOT IN"
+)
+
+const (
+	COUNT AggregateFunction = "COUNT"
+	MIN   AggregateFunction = "MIN"
+	MAX   AggregateFunction = "MAX"
+	AVG   AggregateFunction = "AVG"
+	SUM   AggregateFunction = "SUM"
 )
