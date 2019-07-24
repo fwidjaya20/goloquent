@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/fwidjaya20/goloquent/pkg/goloquent"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBuilder_CreateTable(t *testing.T) {
-	builder := goloquent.NewBuilder()
+	builder := NewBuilder()
 
-	schema := goloquent.Create("books", func(table *goloquent.Schema) {
+	schema := Create("books", func(table *Schema) {
 		table.Numeric("id").AutoIncrement()
 		table.String("name").NotNull()
 		table.UUID("author_id")
@@ -24,8 +23,8 @@ func TestBuilder_CreateTable(t *testing.T) {
 		table.Foreign("author_id").
 			On("authors").
 			Reference("id").
-			OnUpdate(goloquent.RA_CASCADE).
-			OnDelete(goloquent.RA_RESTRICT)
+			OnUpdate(RA_CASCADE).
+			OnDelete(RA_RESTRICT)
 	})
 
 	t.Run("CreateTable", func(t *testing.T) {
@@ -41,9 +40,9 @@ func TestBuilder_CreateTable(t *testing.T) {
 }
 
 func TestBuilder_AlterTable(t *testing.T) {
-	builder := goloquent.NewBuilder()
+	builder := NewBuilder()
 
-	schema := goloquent.Table("authors", func(table *goloquent.Schema) {
+	schema := Table("authors", func(table *Schema) {
 		table.String("email").Unique()
 		table.Date("born_at")
 		table.String("address")
@@ -71,9 +70,9 @@ func TestBuilder_AlterTable(t *testing.T) {
 }
 
 func TestBuilder_DropTable(t *testing.T) {
-	builder := goloquent.NewBuilder()
+	builder := NewBuilder()
 
-	schema := goloquent.Drop("authors")
+	schema := Drop("authors")
 
 	t.Run("DropTable", func(t *testing.T) {
 		query := builder.BuildDropTable(schema)
