@@ -192,12 +192,17 @@ func (q *Query) prepareNamed(query string) (*sqlx.NamedStmt, map[string]interfac
 }
 
 func (q *Query) mapConditionPayload() map[string]interface{} {
-	payload := make(map[string]interface{}, len(q.Binding.Conditions))
+	payload := map[string]interface{}{}
 
 	for i, v := range q.Binding.Conditions {
-		key := fmt.Sprintf("%d%s", i, v.Column)
+		switch v.Operator {
+		case IN, NOT_IN:
+			payload = q.Builder.buildInValue(payload, i, v)
+		default:
+			key := fmt.Sprintf("%d%s", i, v.Column)
 
-		payload[key] = v.Value
+			payload[key] = v.Value
+		}
 	}
 
 	return payload

@@ -385,9 +385,9 @@ func (b *Builder) buildQueryCondition(table string, binding Binding) string {
 		switch w.Operator {
 		case IN, NOT_IN:
 			if 0 == i {
-				query = fmt.Sprintf(`%s"%s"."%s" %s (:%d%s)`, query, table, w.Column, w.Operator, i, w.Column)
+				query = fmt.Sprintf(`%s"%s"."%s" %s (%s)`, query, table, w.Column, w.Operator, b.buildInNamed(i, w))
 			} else {
-				query = fmt.Sprintf(`%s%s "%s"."%s" %s (:%d%s)`, query, w.Connector, table, w.Column, w.Operator, i, w.Column)
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s (%s)`, query, w.Connector, table, w.Column, w.Operator, b.buildInNamed(i, w))
 			}
 		default:
 			if 0 == i {
@@ -399,6 +399,34 @@ func (b *Builder) buildQueryCondition(table string, binding Binding) string {
 	}
 
 	return query
+}
+
+func (b *Builder) buildInNamed(prefix int, condition *Condition) string {
+	var bind string
+
+	length := reflect.ValueOf(condition.Value).Len()
+
+	for i := 0; i < length; i++ {
+		if i == length-1 {
+			bind = fmt.Sprintf("%s:%d%s%d", bind, prefix, condition.Column, i)
+		} else {
+			bind = fmt.Sprintf("%s:%d%s%d,", bind, prefix, condition.Column, i)
+		}
+	}
+
+	return bind
+}
+
+func (b *Builder) buildInValue(payload map[string]interface{}, prefix int, condition *Condition) map[string]interface{} {
+	vals := reflect.ValueOf(condition.Value)
+
+	for i := 0; i < vals.Len(); i++ {
+		key := fmt.Sprintf("%d%s%d", prefix, condition.Column, i)
+
+		payload[key] = vals.Index(i).Interface()
+	}
+
+	return payload
 }
 
 func (b *Builder) buildWhereInValues(value interface{}) string {

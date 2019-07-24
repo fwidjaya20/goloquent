@@ -148,6 +148,8 @@ func selectSample() {
 	m := model.GenreModel()
 
 	getStmt(query, m)
+	getInStmt(query, m)
+	getExceptStmt(query, m)
 	allStmt(query, m)
 	firstStmt(query, m)
 	paginateStmt(query, m)
@@ -166,6 +168,46 @@ func getStmt(query *goloquent.Query, m goloquent.IModel) {
 	}
 
 	fmt.Println("GET - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getInStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		WhereIn("name", []string{"Action", "Crime", "Horror"}).
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET IN - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getExceptStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		Except("name", []string{"Action", "Crime", "Horror"}).
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET Except - Statement")
 	for i, v := range genres.([]*model.Genre) {
 		fmt.Printf("Genre #%02d\n", i+1)
 		fmt.Println("==========")
