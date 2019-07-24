@@ -74,40 +74,6 @@ func (q *Query) ToSQL() string {
 	return q.Builder.BuildSelect(q.Model, q.Binding)
 }
 
-// BeginTransaction .
-func (q *Query) BeginTransaction() *Query {
-	var err error
-
-	q.Tx, err = q.DB.Beginx()
-
-	if err != nil {
-		q.Rollback()
-		panic(err)
-	}
-
-	return q
-}
-
-// Rollback .
-func (q *Query) Rollback() *Query {
-	fmt.Println(q.Tx)
-
-	q.Tx.Rollback()
-	return q
-}
-
-// Commit .
-func (q *Query) Commit() *Query {
-	q.Tx.Commit()
-	return q
-}
-
-// EndTransaction .
-func (q *Query) EndTransaction() *Query {
-	q.Tx = nil
-	return q
-}
-
 func (q *Query) generateInsertColumn() []string {
 	var columns []string
 	typeOf := reflect.TypeOf(q.Model)
