@@ -9,11 +9,14 @@ type Command string
 // ReferenceAction is a replica of string type that used for store relationship action
 type ReferenceAction string
 
-// Condition is a replica of string type that used for store condition operator
+// Operator is a replica of string type that used for store operator
 type Operator string
 
 // Connector is a replica of string type that used for connecting between condition
 type Connector string
+
+// OrderDirection is a replica of string type that used for specify order direction
+type OrderDirection string
 
 // AggregateFunction is a replica of string type that used for store Aggregate Function
 type AggregateFunction string
@@ -77,6 +80,15 @@ const (
 	NOT_LIKE              Operator = "NOT LIKE"
 	IN                    Operator = "IN"
 	NOT_IN                Operator = "NOT IN"
+	BETWEEN               Operator = "BETWEEN"
+	NOT_BETWEEN           Operator = "NOT BETWEEN"
+	IS_NULL               Operator = "IS NULL"
+	IS_NOT_NULL           Operator = "IS NOT NULL"
+)
+
+const (
+	ASC  OrderDirection = "ASC"
+	DESC OrderDirection = "DESC"
 )
 
 const (

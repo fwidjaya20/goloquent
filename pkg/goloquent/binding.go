@@ -6,4 +6,6 @@ type Binding struct {
 	Conditions []*Condition
 	Limit      int
 	Offset     int
+	GroupBy    []string
+	Order      *Order
 }
