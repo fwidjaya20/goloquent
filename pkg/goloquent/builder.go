@@ -432,9 +432,9 @@ func (b *Builder) buildInNamed(prefix int, condition *Condition) string {
 
 	for i := 0; i < length; i++ {
 		if i == length-1 {
-			bind = fmt.Sprintf("%s:%d%s-in-%d", bind, prefix, condition.Column, i)
+			bind = fmt.Sprintf("%s:%d%s_in_%d", bind, prefix, condition.Column, i)
 		} else {
-			bind = fmt.Sprintf("%s:%d%s-in-%d,", bind, prefix, condition.Column, i)
+			bind = fmt.Sprintf("%s:%d%s_in_%d,", bind, prefix, condition.Column, i)
 		}
 	}
 
@@ -445,7 +445,7 @@ func (b *Builder) buildInValue(payload map[string]interface{}, prefix int, condi
 	vals := reflect.ValueOf(condition.Value)
 
 	for i := 0; i < vals.Len(); i++ {
-		key := fmt.Sprintf("%d%s-in-%d", prefix, condition.Column, i)
+		key := fmt.Sprintf("%d%s_in_%d", prefix, condition.Column, i)
 
 		payload[key] = vals.Index(i).Interface()
 	}

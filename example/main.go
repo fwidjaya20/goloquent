@@ -14,11 +14,11 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	migrationSample()
+	// migrationSample()
 
-	seederSample()
+	// seederSample()
 
-	insertSample()
+	// insertSample()
 
 	selectSample()
 }
@@ -394,7 +394,7 @@ func paginateStmt(query *goloquent.Query, m goloquent.IModel) {
 	currentPage := 3
 	limit := 10
 
-	genres, err := query.Use(m).
+	data, err := query.Use(m).
 		Paginate(currentPage, limit)
 
 	if nil != err {
@@ -402,8 +402,8 @@ func paginateStmt(query *goloquent.Query, m goloquent.IModel) {
 		return
 	}
 
-	fmt.Printf("PAGINATE (Page #%d, Limit %d) - Statement\n", currentPage, limit)
-	for i, v := range genres.([]*model.Genre) {
+	fmt.Printf("PAGINATE (Page #%d, Limit %d) - Total Data : %d - Statement\n", currentPage, data["total"], limit)
+	for i, v := range data["data"].([]*model.Genre) {
 		fmt.Printf("Genre #%02d\n", i+1)
 		fmt.Println("==========")
 		fmt.Printf("ID   : %d\n", v.ID)
