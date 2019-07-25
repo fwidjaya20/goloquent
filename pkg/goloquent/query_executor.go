@@ -3,6 +3,7 @@ package goloquent
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 	"time"
 )
@@ -26,6 +27,8 @@ func (q *Query) Get() (interface{}, error) {
 
 	stmt, args, err := q.prepareNamed(q.ToSQL())
 
+	fmt.Println(q.ToSQL())
+
 	err = stmt.Select(results, args)
 
 	return q.mapToSliceModel(results), err
@@ -35,7 +38,7 @@ func (q *Query) Get() (interface{}, error) {
 func (q *Query) First() (interface{}, error) {
 	defer q.resetBindings()
 
-	q.Binding.Limit = 1
+	q.Take(1)
 
 	result, err := q.makeTypeOf(q.Model)
 
@@ -55,12 +58,12 @@ func (q *Query) Paginate(page int, limit ...int) (interface{}, error) {
 	defer q.resetBindings()
 
 	if len(limit) > 0 {
-		q.Binding.Limit = limit[0]
+		q.Take(limit[0])
 	} else {
-		q.Binding.Limit = 50
+		q.Take(50)
 	}
 
-	q.Binding.Offset = (page - 1) * q.Binding.Limit
+	q.Skip((page - 1) * q.Binding.Limit)
 
 	return q.Get()
 }

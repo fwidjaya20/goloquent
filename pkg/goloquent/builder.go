@@ -114,20 +114,28 @@ func (b *Builder) BuildSelect(model IModel, binding Binding) string {
 	if nil != binding.Aggregate {
 		query = fmt.Sprintf("%s %s", query, b.buildSelectAggregate(binding.Aggregate.AggregateFunc, model.GetTableName(), binding.Aggregate.Column))
 	} else if len(model.GetColumns(model)) > 0 {
-		var selectColumns string
+		query = fmt.Sprintf(`%s %s`, query, b.buildSelectColumns(model.GetTableName(), model.GetColumns(model)))
 
-		selectComma := true
-		for _, col := range model.GetColumns(model) {
-			selectColumns, selectComma = b.buildSelectColumns(selectColumns, model.GetTableName(), col, selectComma)
+		if model.IsTimestamp() {
+			query = fmt.Sprintf(`%s, "%s"."created_at", `, query, model.GetTableName())
+			query = fmt.Sprintf(`%s"%s"."updated_at"`, query, model.GetTableName())
 		}
 
-		query = fmt.Sprintf("%s %s", query, selectColumns)
+		if model.IsSoftDelete() {
+			query = fmt.Sprintf(`%s, "%s"."deleted_at"`, query, model.GetTableName())
+		}
+
+		query = fmt.Sprintf("%s ", query)
 	}
 
 	query = fmt.Sprintf(`%sFROM "%s" `, query, model.GetTableName())
 
 	if len(binding.Conditions) > 0 {
-		query = fmt.Sprintf(`%sWHERE %s `, query, b.buildQueryCondition(model.GetTableName(), binding))
+		query = fmt.Sprintf(`%sWHERE %s `, query, b.buildQueryCondition(model.GetTableName(), binding.Conditions))
+	}
+
+	if len(binding.GroupBy) > 0 {
+		query = fmt.Sprintf(`%sGROUP BY %s `, query, b.buildGroupByColumns(model.GetTableName(), binding.GroupBy))
 	}
 
 	if binding.Limit > 0 {
@@ -136,6 +144,10 @@ func (b *Builder) BuildSelect(model IModel, binding Binding) string {
 
 	if binding.Offset > 0 {
 		query = fmt.Sprintf(`%sOFFSET %d;`, query, binding.Offset)
+	}
+
+	if nil != binding.Order {
+		query = fmt.Sprintf(`%sORDER BY %s %s;`, query, b.buildOrderColumns(model.GetTableName(), binding.Order.Columns), binding.Order.Direction)
 	}
 
 	return query
@@ -358,16 +370,8 @@ func (b *Builder) buildInsertBulkValue(query string, model IModel, i int) string
 	return fmt.Sprintf(`%s(%s)`, query, strings.Join(qCol, ", "))
 }
 
-func (b *Builder) buildSelectColumns(query string, table string, column string, hasComma bool) (string, bool) {
-	if hasComma {
-		hasComma = false
-	} else {
-		query = fmt.Sprintf("%s, ", query)
-	}
-
-	query = fmt.Sprintf(`%s"%s"."%s"`, query, table, column)
-
-	return query, hasComma
+func (b *Builder) buildSelectColumns(table string, columns []string) string {
+	return b.mapColumnsToQuery(table, columns)
 }
 
 func (b *Builder) buildSelectAggregate(aggregateFn AggregateFunction, table string, column string) string {
@@ -378,22 +382,42 @@ func (b *Builder) buildSelectAggregate(aggregateFn AggregateFunction, table stri
 	return fmt.Sprintf(`%v("%s"."%s") `, aggregateFn, table, column)
 }
 
-func (b *Builder) buildQueryCondition(table string, binding Binding) string {
+func (b *Builder) buildQueryCondition(table string, conditions []*Condition) string {
 	var query string
 
-	for i, w := range binding.Conditions {
+	for i, w := range conditions {
 		switch w.Operator {
 		case IN, NOT_IN:
 			if 0 == i {
-				query = fmt.Sprintf(`%s"%s"."%s" %s (%s)`, query, table, w.Column, w.Operator, b.buildInNamed(i, w))
+				query = fmt.Sprintf(`%s"%s"."%s" %s (%s) `, query, table, w.Column, w.Operator, b.buildInNamed(i, w))
 			} else {
-				query = fmt.Sprintf(`%s%s "%s"."%s" %s (%s)`, query, w.Connector, table, w.Column, w.Operator, b.buildInNamed(i, w))
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s (%s) `, query, w.Connector, table, w.Column, w.Operator, b.buildInNamed(i, w))
+			}
+		case BETWEEN, NOT_BETWEEN:
+			if 0 == i {
+				query = fmt.Sprintf(`%s"%s"."%s" %s %s `, query, table, w.Column, w.Operator, b.buildBetweenNamed(i, w))
+			} else {
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s %s `, query, w.Connector, table, w.Column, w.Operator, b.buildBetweenNamed(i, w))
+			}
+		case IS_NULL, IS_NOT_NULL:
+			if 0 == i {
+				query = fmt.Sprintf(`%s"%s"."%s" %s `, query, table, w.Column, w.Operator)
+			} else {
+				query = fmt.Sprintf(`%s%s "%s"."%s" %s `, query, w.Connector, table, w.Column, w.Operator)
 			}
 		default:
-			if 0 == i {
-				query = fmt.Sprintf(`%s"%s"."%s" %s :%d%s `, query, table, w.Column, w.Operator, i, w.Column)
+			if w.IsCompareColumn {
+				if 0 == i {
+					query = fmt.Sprintf(`%s"%s"."%s" %s "%s"."%s" `, query, table, w.Column, w.Operator, table, w.ColumnCompare)
+				} else {
+					query = fmt.Sprintf(`%s%s "%s"."%s" %s "%s"."%s" `, query, w.Connector, table, w.Column, w.Operator, table, w.ColumnCompare)
+				}
 			} else {
-				query = fmt.Sprintf(`%s%s "%s"."%s" %s :%d%s `, query, w.Connector, table, w.Column, w.Operator, i, w.Column)
+				if 0 == i {
+					query = fmt.Sprintf(`%s"%s"."%s" %s :%d%s `, query, table, w.Column, w.Operator, i, w.Column)
+				} else {
+					query = fmt.Sprintf(`%s%s "%s"."%s" %s :%d%s `, query, w.Connector, table, w.Column, w.Operator, i, w.Column)
+				}
 			}
 		}
 	}
@@ -408,9 +432,9 @@ func (b *Builder) buildInNamed(prefix int, condition *Condition) string {
 
 	for i := 0; i < length; i++ {
 		if i == length-1 {
-			bind = fmt.Sprintf("%s:%d%s%d", bind, prefix, condition.Column, i)
+			bind = fmt.Sprintf("%s:%d%s-in-%d", bind, prefix, condition.Column, i)
 		} else {
-			bind = fmt.Sprintf("%s:%d%s%d,", bind, prefix, condition.Column, i)
+			bind = fmt.Sprintf("%s:%d%s-in-%d,", bind, prefix, condition.Column, i)
 		}
 	}
 
@@ -421,12 +445,44 @@ func (b *Builder) buildInValue(payload map[string]interface{}, prefix int, condi
 	vals := reflect.ValueOf(condition.Value)
 
 	for i := 0; i < vals.Len(); i++ {
+		key := fmt.Sprintf("%d%s-in-%d", prefix, condition.Column, i)
+
+		payload[key] = vals.Index(i).Interface()
+	}
+
+	return payload
+}
+
+func (b *Builder) buildBetweenNamed(prefix int, condition *Condition) string {
+	var bind string
+
+	length := reflect.ValueOf(condition.Value).Len()
+
+	if length == 2 {
+		bind = fmt.Sprintf("%s:%d%s0 AND :%d%s1", bind, prefix, condition.Column, prefix, condition.Column)
+	}
+
+	return bind
+}
+
+func (b *Builder) buildBetweenValue(payload map[string]interface{}, prefix int, condition *Condition) map[string]interface{} {
+	vals := reflect.ValueOf(condition.Value)
+
+	for i := 0; i < vals.Len(); i++ {
 		key := fmt.Sprintf("%d%s%d", prefix, condition.Column, i)
 
 		payload[key] = vals.Index(i).Interface()
 	}
 
 	return payload
+}
+
+func (b *Builder) buildOrderColumns(table string, columns []string) string {
+	return b.mapColumnsToQuery(table, columns)
+}
+
+func (b *Builder) buildGroupByColumns(table string, columns []string) string {
+	return b.mapColumnsToQuery(table, columns)
 }
 
 func (b *Builder) buildWhereInValues(value interface{}) string {
@@ -445,4 +501,18 @@ func (b *Builder) buildWhereInValues(value interface{}) string {
 	}
 
 	return query
+}
+
+func (b *Builder) mapColumnsToQuery(table string, columns []string) string {
+	var cols string
+
+	for i, col := range columns {
+		if i == len(columns)-1 {
+			cols = fmt.Sprintf(`%s"%s"."%s"`, cols, table, col)
+		} else {
+			cols = fmt.Sprintf(`%s"%s"."%s", `, cols, table, col)
+		}
+	}
+
+	return cols
 }

@@ -150,6 +150,12 @@ func selectSample() {
 	getStmt(query, m)
 	getInStmt(query, m)
 	getExceptStmt(query, m)
+	getBetweenStmt(query, m)
+	getNotBetweenStmt(query, m)
+	getIsNullStmt(query, m)
+	getIsNotNullStmt(query, m)
+	getCompareColumnStmt(query, m)
+	getGroupByAndHavingStmt(query, m)
 	allStmt(query, m)
 	firstStmt(query, m)
 	paginateStmt(query, m)
@@ -160,6 +166,7 @@ func getStmt(query *goloquent.Query, m goloquent.IModel) {
 	genres, err := query.Use(m).
 		Where("name", goloquent.ILIKE, "%bulk%").
 		OrWhere("id", "=", 1).
+		OrderBy("DESC", "id").
 		Get()
 
 	if nil != err {
@@ -180,6 +187,7 @@ func getStmt(query *goloquent.Query, m goloquent.IModel) {
 func getInStmt(query *goloquent.Query, m goloquent.IModel) {
 	genres, err := query.Use(m).
 		WhereIn("name", []string{"Action", "Crime", "Horror"}).
+		OrWhereIn("id", []int{11, 12, 13}).
 		Get()
 
 	if nil != err {
@@ -200,6 +208,7 @@ func getInStmt(query *goloquent.Query, m goloquent.IModel) {
 func getExceptStmt(query *goloquent.Query, m goloquent.IModel) {
 	genres, err := query.Use(m).
 		Except("name", []string{"Action", "Crime", "Horror"}).
+		OrExcept("id", []int{6, 7, 8, 9, 10, 20, 21, 22}).
 		Get()
 
 	if nil != err {
@@ -208,6 +217,132 @@ func getExceptStmt(query *goloquent.Query, m goloquent.IModel) {
 	}
 
 	fmt.Println("GET Except - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getBetweenStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		WhereBetween("id", 5, 10).
+		OrWhereBetween("id", 21, 25).
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET BETWEEN - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getNotBetweenStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		WhereNotBetween("id", 1, 18).
+		OrWhereNotBetween("id", 21, 25).
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET NOT BETWEEN - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getIsNullStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		WhereNull("created_at").
+		OrWhereNull("created_at").
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET NULL - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getIsNotNullStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		WhereNotNull("updated_at").
+		OrWhereNotNull("updated_at").
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET NOT NULL - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getCompareColumnStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		WhereColumn("created_at", "!=", "updated_at").
+		OrWhereColumn("created_at", "!=", "updated_at").
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET COMPARE COLUMN - Statement")
+	for i, v := range genres.([]*model.Genre) {
+		fmt.Printf("Genre #%02d\n", i+1)
+		fmt.Println("==========")
+		fmt.Printf("ID   : %d\n", v.ID)
+		fmt.Printf("Name : %s\n", v.Name)
+		fmt.Println("==========")
+	}
+}
+
+func getGroupByAndHavingStmt(query *goloquent.Query, m goloquent.IModel) {
+	genres, err := query.Use(m).
+		GroupBy("id", "name", "created_at", "updated_at").
+		OrderBy("ASC", "id", "name").
+		Get()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("GET COMPARE COLUMN - Statement")
 	for i, v := range genres.([]*model.Genre) {
 		fmt.Printf("Genre #%02d\n", i+1)
 		fmt.Println("==========")
