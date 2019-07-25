@@ -27,7 +27,9 @@ func (q *Query) Get() (interface{}, error) {
 
 	stmt, args, err := q.prepareNamed(q.ToSQL())
 
+	fmt.Println(err)
 	fmt.Println(q.ToSQL())
+	fmt.Println(args)
 
 	err = stmt.Select(results, args)
 
@@ -54,7 +56,7 @@ func (q *Query) First() (interface{}, error) {
 }
 
 // Paginate .
-func (q *Query) Paginate(page int, limit ...int) (interface{}, error) {
+func (q *Query) Paginate(page int, limit ...int) (map[string]interface{}, error) {
 	defer q.resetBindings()
 
 	if len(limit) > 0 {
@@ -65,7 +67,15 @@ func (q *Query) Paginate(page int, limit ...int) (interface{}, error) {
 
 	q.Skip((page - 1) * q.Binding.Limit)
 
-	return q.Get()
+	data, err := q.Get()
+	total := q.Count()
+
+	result := map[string]interface{}{
+		"data":  data,
+		"total": total,
+	}
+
+	return result, err
 }
 
 // Insert .
