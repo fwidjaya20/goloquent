@@ -14,11 +14,13 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	// migrationSample()
+	migrationSample()
 
-	// seederSample()
+	seederSample()
 
-	// insertSample()
+	insertSample()
+
+	insertSample2()
 
 	selectSample()
 }
@@ -140,6 +142,43 @@ func insertSample() {
 	query.Commit()
 
 	query.EndTransaction()
+}
+
+func insertSample2() {
+	query := goloquent.DB(config.GetDB())
+
+	genre := model.GenreModel()
+
+	genre.Name = "Testing Return Id"
+
+	result, err := query.Use(genre).Insert()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(result.(*model.Genre).ID)
+	fmt.Println(result.(*model.Genre).Name)
+
+	// Insert Bulk Without Transaction
+	var payload []*model.Genre
+
+	for i := 1; i <= 5; i++ {
+		genre := model.GenreModel()
+
+		genre.Name = fmt.Sprintf("Testing Return Id %02d", i)
+
+		payload = append(payload, genre)
+	}
+
+	result, err = query.Use(model.GenreModel()).BulkInsert(payload)
+
+	if nil != err {
+		fmt.Println(err)
+	}
+
+	fmt.Println(result)
 }
 
 func selectSample() {
