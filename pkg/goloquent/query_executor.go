@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // All .
@@ -79,8 +81,8 @@ func (q *Query) Paginate(page int, limit ...int) (map[string]interface{}, error)
 }
 
 // Insert .
-func (q *Query) Insert(returning ...string) (sql.Result, error) {
-	var result sql.Result
+func (q *Query) Insert(returning ...string) (interface{}, error) {
+	var result *sqlx.Rows
 	var err error
 
 	query := q.Builder.BuildInsert(q.Model, returning...)
@@ -92,24 +94,27 @@ func (q *Query) Insert(returning ...string) (sql.Result, error) {
 	}
 
 	if nil != q.Tx {
-		result, err = q.Tx.NamedExec(query, payload)
+		result, err = q.Tx.NamedQuery(query, payload)
 	} else {
-		result, err = q.DB.NamedExec(query, payload)
+		result, err = q.DB.NamedQuery(query, payload)
 	}
 
-	return result, err
+	if nil != result && result.Next() {
+		result.StructScan(q.Model)
+	}
+
+	return q.Model, err
 }
 
 // BulkInsert .
-func (q *Query) BulkInsert(data interface{}, returning ...string) (sql.Result, error) {
-	var result sql.Result
+func (q *Query) BulkInsert(data interface{}, returning ...string) (bool, error) {
 	var err error
 	var value reflect.Value
 
 	value = reflect.ValueOf(data)
 
 	if reflect.Slice != value.Kind() {
-		return nil, errors.New("data must be a slice")
+		return false, errors.New("data must be a slice")
 	}
 
 	slice := make([]interface{}, value.Len())
@@ -122,12 +127,16 @@ func (q *Query) BulkInsert(data interface{}, returning ...string) (sql.Result, e
 	payloads := q.bulkPayload(slice)
 
 	if nil != q.Tx {
-		result, err = q.Tx.NamedExec(query, payloads)
+		_, err = q.Tx.NamedQuery(query, payloads)
 	} else {
-		result, err = q.DB.NamedExec(query, payloads)
+		_, err = q.DB.NamedQuery(query, payloads)
 	}
 
-	return result, err
+	if nil != err {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // RawCommand .
