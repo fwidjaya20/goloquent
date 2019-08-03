@@ -1,7 +1,6 @@
 package goloquent
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -207,17 +206,21 @@ func (q *Query) BulkInsert(data interface{}, returning ...string) (bool, error) 
 }
 
 // RawCommand .
-func (q *Query) RawCommand(query string, args ...interface{}) (sql.Result, error) {
-	var result sql.Result
+func (q *Query) RawCommand(dest IModel, query string, args interface{}) (interface{}, error) {
+	var result *sqlx.Rows
 	var err error
 
 	if nil != q.Tx {
-		result, err = q.Tx.Exec(query, args...)
+		result, err = q.Tx.NamedQuery(query, args)
 	} else {
-		result, err = q.DB.Exec(query, args...)
+		result, err = q.DB.NamedQuery(query, args)
 	}
 
-	return result, err
+	if nil != result && result.Next() {
+		result.StructScan(dest)
+	}
+
+	return dest, err
 }
 
 // RawQuery .
