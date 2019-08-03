@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/fwidjaya20/goloquent/config"
 	"github.com/fwidjaya20/goloquent/example/migration"
@@ -14,11 +15,11 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	// migrationSample()
+	migrationSample()
 
 	// seederSample()
 
-	// insertSample()
+	insertSample()
 
 	// insertSample2()
 
@@ -52,96 +53,110 @@ func seederSample() {
 func insertSample() {
 	query := goloquent.DB(config.GetDB())
 
-	// Insert Without Transaction
-	for i := 1; i <= 5; i++ {
-		genre := model.GenreModel()
+	// // Insert Without Transaction
+	// for i := 1; i <= 5; i++ {
+	// 	genre := model.GenreModel()
 
-		genre.Name = fmt.Sprintf("Testing without Transaction %02d", i)
+	// 	genre.Name = fmt.Sprintf("Testing without Transaction %02d", i)
 
-		_, err := query.Use(genre).Insert()
+	// 	_, err := query.Use(genre).Insert()
 
-		if nil != err {
-			fmt.Println(err)
-		}
-	}
+	// 	if nil != err {
+	// 		fmt.Println(err)
+	// 	}
+	// }
 
-	// Insert Using Transaction
-	for i := 6; i <= 10; i++ {
-		query.BeginTransaction()
+	// // Insert Using Transaction
+	// for i := 6; i <= 10; i++ {
+	// 	query.BeginTransaction()
 
-		genre := model.GenreModel()
+	// 	genre := model.GenreModel()
 
-		genre.Name = fmt.Sprintf("Testing with Transaction %02d", i)
+	// 	genre.Name = fmt.Sprintf("Testing with Transaction %02d", i)
 
-		_, err := query.Use(genre).Insert()
+	// 	_, err := query.Use(genre).Insert()
 
-		if nil != err {
-			query.Rollback()
-			fmt.Println(err)
-		}
+	// 	if nil != err {
+	// 		query.Rollback()
+	// 		fmt.Println(err)
+	// 	}
 
-		query.Commit()
+	// 	query.Commit()
 
-		query.EndTransaction()
-	}
+	// 	query.EndTransaction()
+	// }
 
-	// Insert Bulk Without Transaction
-	var payload []*model.Genre
+	// // Insert Bulk Without Transaction
+	// var payload []*model.Genre
 
-	for i := 11; i <= 15; i++ {
-		genre := model.GenreModel()
+	// for i := 11; i <= 15; i++ {
+	// 	genre := model.GenreModel()
 
-		genre.Name = fmt.Sprintf("Testing Bulk Without Transaction %02d", i)
+	// 	genre.Name = fmt.Sprintf("Testing Bulk Without Transaction %02d", i)
 
-		payload = append(payload, genre)
-	}
+	// 	payload = append(payload, genre)
+	// }
 
-	_, err := query.Use(model.GenreModel()).BulkInsert(payload)
+	// _, err := query.Use(model.GenreModel()).BulkInsert(payload)
 
-	if nil != err {
-		fmt.Println(err)
-	}
+	// if nil != err {
+	// 	fmt.Println(err)
+	// }
 
-	// Insert Bulk With Transaction
-	payload = []*model.Genre{}
+	// // Insert Bulk With Transaction
+	// payload = []*model.Genre{}
 
-	for i := 16; i <= 20; i++ {
-		genre := model.GenreModel()
+	// for i := 16; i <= 20; i++ {
+	// 	genre := model.GenreModel()
 
-		genre.Name = fmt.Sprintf("Testing Bulk With Transaction %02d", i)
+	// 	genre.Name = fmt.Sprintf("Testing Bulk With Transaction %02d", i)
 
-		payload = append(payload, genre)
-	}
+	// 	payload = append(payload, genre)
+	// }
 
-	query.BeginTransaction()
+	// query.BeginTransaction()
 
-	_, err = query.Use(model.GenreModel()).BulkInsert(payload)
+	// _, err = query.Use(model.GenreModel()).BulkInsert(payload)
 
-	if nil != err {
-		query.Rollback()
-		fmt.Println(err)
-	}
+	// if nil != err {
+	// 	query.Rollback()
+	// 	fmt.Println(err)
+	// }
 
-	query.Commit()
+	// query.Commit()
 
-	query.EndTransaction()
+	// query.EndTransaction()
 
 	// Insert Raw without Transaction
-	_, err = query.RawCommand(`insert into genres ("name") values ($1);`, "Testing Raw without Transaction 21")
+	payload1 := map[string]interface{}{
+		"name":       "Testing Raw without Transaction 21",
+		"created_at": time.Now(),
+	}
+
+	result, err := query.RawCommand(model.GenreModel(), `insert into genres ("name", "created_at") values (:name, :created_at) returning *;`, payload1)
 
 	if nil != err {
 		fmt.Println(err)
 	}
+
+	fmt.Println(result.(*model.Genre))
 
 	// Insert Raw with Transaction
 	query.BeginTransaction()
 
-	_, err = query.RawCommand(`insert into genres ("name") values ($1);`, "Testing Raw with Transaction 22")
+	payload2 := map[string]interface{}{
+		"name":       "Testing Raw without Transaction 22",
+		"created_at": time.Now(),
+	}
+
+	result, err = query.RawCommand(model.GenreModel(), `insert into genres ("name", "created_at") values (:name, :created_at) returning *;`, payload2)
 
 	if nil != err {
 		query.Rollback()
 		fmt.Println(err)
 	}
+
+	fmt.Println(result.(*model.Genre))
 
 	query.Commit()
 
