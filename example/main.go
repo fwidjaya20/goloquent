@@ -17,17 +17,17 @@ func main() {
 
 	migrationSample()
 
-	// seederSample()
+	seederSample()
 
 	insertSample()
 
-	// insertSample2()
+	insertSample2()
 
-	// updateSample()
+	updateSample()
 
-	// deleteSample()
+	deleteSample()
 
-	// selectSample()
+	selectSample()
 }
 
 func migrationSample() {
@@ -53,79 +53,79 @@ func seederSample() {
 func insertSample() {
 	query := goloquent.DB(config.GetDB())
 
-	// // Insert Without Transaction
-	// for i := 1; i <= 5; i++ {
-	// 	genre := model.GenreModel()
+	// Insert Without Transaction
+	for i := 1; i <= 5; i++ {
+		genre := model.GenreModel()
 
-	// 	genre.Name = fmt.Sprintf("Testing without Transaction %02d", i)
+		genre.Name = fmt.Sprintf("Testing without Transaction %02d", i)
 
-	// 	_, err := query.Use(genre).Insert()
+		_, err := query.Use(genre).Insert()
 
-	// 	if nil != err {
-	// 		fmt.Println(err)
-	// 	}
-	// }
+		if nil != err {
+			fmt.Println(err)
+		}
+	}
 
-	// // Insert Using Transaction
-	// for i := 6; i <= 10; i++ {
-	// 	query.BeginTransaction()
+	// Insert Using Transaction
+	for i := 6; i <= 10; i++ {
+		query.BeginTransaction()
 
-	// 	genre := model.GenreModel()
+		genre := model.GenreModel()
 
-	// 	genre.Name = fmt.Sprintf("Testing with Transaction %02d", i)
+		genre.Name = fmt.Sprintf("Testing with Transaction %02d", i)
 
-	// 	_, err := query.Use(genre).Insert()
+		_, err := query.Use(genre).Insert()
 
-	// 	if nil != err {
-	// 		query.Rollback()
-	// 		fmt.Println(err)
-	// 	}
+		if nil != err {
+			query.Rollback()
+			fmt.Println(err)
+		}
 
-	// 	query.Commit()
+		query.Commit()
 
-	// 	query.EndTransaction()
-	// }
+		query.EndTransaction()
+	}
 
-	// // Insert Bulk Without Transaction
-	// var payload []*model.Genre
+	// Insert Bulk Without Transaction
+	var payload []*model.Genre
 
-	// for i := 11; i <= 15; i++ {
-	// 	genre := model.GenreModel()
+	for i := 11; i <= 15; i++ {
+		genre := model.GenreModel()
 
-	// 	genre.Name = fmt.Sprintf("Testing Bulk Without Transaction %02d", i)
+		genre.Name = fmt.Sprintf("Testing Bulk Without Transaction %02d", i)
 
-	// 	payload = append(payload, genre)
-	// }
+		payload = append(payload, genre)
+	}
 
-	// _, err := query.Use(model.GenreModel()).BulkInsert(payload)
+	_, err := query.Use(model.GenreModel()).BulkInsert(payload)
 
-	// if nil != err {
-	// 	fmt.Println(err)
-	// }
+	if nil != err {
+		fmt.Println(err)
+	}
 
-	// // Insert Bulk With Transaction
-	// payload = []*model.Genre{}
+	// Insert Bulk With Transaction
+	payload = []*model.Genre{}
 
-	// for i := 16; i <= 20; i++ {
-	// 	genre := model.GenreModel()
+	for i := 16; i <= 20; i++ {
+		genre := model.GenreModel()
 
-	// 	genre.Name = fmt.Sprintf("Testing Bulk With Transaction %02d", i)
+		genre.Name = fmt.Sprintf("Testing Bulk With Transaction %02d", i)
 
-	// 	payload = append(payload, genre)
-	// }
+		payload = append(payload, genre)
+	}
 
-	// query.BeginTransaction()
+	query.BeginTransaction()
 
-	// _, err = query.Use(model.GenreModel()).BulkInsert(payload)
+	_, err = query.Use(model.GenreModel()).BulkInsert(payload)
 
-	// if nil != err {
-	// 	query.Rollback()
-	// 	fmt.Println(err)
-	// }
+	if nil != err {
+		query.Rollback()
+		fmt.Println(err)
+	}
 
-	// query.Commit()
+	query.Commit()
 
-	// query.EndTransaction()
+	query.EndTransaction()
 
 	// Insert Raw without Transaction
 	payload1 := map[string]interface{}{
