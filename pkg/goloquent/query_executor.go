@@ -38,6 +38,26 @@ func (q *Query) Get() (interface{}, error) {
 	return q.mapToSliceModel(results), err
 }
 
+// Find .
+func (q *Query) Find(value interface{}) (interface{}, error) {
+	defer q.resetBindings()
+
+	q.Where(q.Model.GetPK(), EQUAL, value)
+	q.Take(1)
+
+	result, err := q.makeTypeOf(q.Model)
+
+	if nil != err {
+		return nil, err
+	}
+
+	stmt, args, err := q.prepareNamed(q.ToSQL())
+
+	err = stmt.Get(result, args)
+
+	return q.assignModel(result, q.Model.GetModel()), err
+}
+
 // First .
 func (q *Query) First() (interface{}, error) {
 	defer q.resetBindings()
@@ -54,7 +74,7 @@ func (q *Query) First() (interface{}, error) {
 
 	err = stmt.Get(result, args)
 
-	return reflect.ValueOf(result).Interface(), err
+	return q.assignModel(result, q.Model.GetModel()), err
 }
 
 // Paginate .
@@ -104,6 +124,31 @@ func (q *Query) Insert(returning ...string) (interface{}, error) {
 	}
 
 	return q.Model, err
+}
+
+// Update .
+func (q *Query) Update() (bool, error) {
+	var err error
+
+	query := q.Builder.BuildUpdate(q.Model)
+
+	payload := q.Model.MapToPayload(q.Model)
+
+	if q.Model.IsTimestamp() {
+		payload[UPDATED_AT] = time.Now()
+	}
+
+	if nil != q.Tx {
+		_, err = q.Tx.NamedQuery(query, payload)
+	} else {
+		_, err = q.DB.NamedQuery(query, payload)
+	}
+
+	if nil != err {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // BulkInsert .

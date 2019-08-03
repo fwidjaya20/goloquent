@@ -7,6 +7,7 @@ import (
 
 // IModel .
 type IModel interface {
+	GetModel() Model
 	GetTableName() string
 	GetPK() string
 	GetColumns(v IModel) []string
@@ -40,6 +41,11 @@ func AutoIncrementModel(table string, pk string, isTimestamp bool, isSoftDelete 
 		Timestamp:     isTimestamp,
 		SoftDelete:    isSoftDelete,
 	}
+}
+
+// GetModel .
+func (m *Model) GetModel() Model {
+	return *m
 }
 
 // GetTableName .

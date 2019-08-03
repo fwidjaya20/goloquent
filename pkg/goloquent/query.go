@@ -143,6 +143,17 @@ func (q *Query) mapToSliceModel(slice interface{}) interface{} {
 	return reflect.ValueOf(slice).Elem().Interface()
 }
 
+func (q *Query) assignModel(result interface{}, m Model) interface{} {
+	value := reflect.ValueOf(result).Interface()
+
+	model := reflect.ValueOf(m)
+
+	assignedModel := reflect.ValueOf(value)
+	assignedModel.Elem().FieldByName("Model").Set(model)
+
+	return assignedModel.Interface()
+}
+
 func (q *Query) resetBindings() {
 	q.Binding = Binding{}
 }
