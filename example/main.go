@@ -14,15 +14,17 @@ func main() {
 	fmt.Println(" * Goloquent * ")
 	fmt.Println("===============")
 
-	migrationSample()
+	// migrationSample()
 
-	seederSample()
+	// seederSample()
 
-	insertSample()
+	// insertSample()
 
-	insertSample2()
+	// insertSample2()
 
-	selectSample()
+	updateSample()
+
+	// selectSample()
 }
 
 func migrationSample() {
@@ -179,6 +181,33 @@ func insertSample2() {
 	}
 
 	fmt.Println(result)
+}
+
+func updateSample() {
+	query := goloquent.DB(config.GetDB())
+
+	id := 3
+
+	genre, err := query.Use(model.GenreModel()).
+		Find(id)
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	v := genre.(*model.Genre)
+
+	v.Name = fmt.Sprintf("Hello World #%d", id)
+
+	isUpdated, err := query.Use(v).Update()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(isUpdated)
 }
 
 func selectSample() {

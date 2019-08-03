@@ -170,6 +170,17 @@ func (b *Builder) BuildInsert(model IModel, returning ...string) string {
 	return query
 }
 
+// BuildUpdate .
+func (b *Builder) BuildUpdate(model IModel) string {
+	var query string
+
+	query = fmt.Sprintf("%sUPDATE %s ", query, model.GetTableName())
+	query = fmt.Sprintf("%sSET %s", query, b.buildUpdateValue(model))
+	query = fmt.Sprintf(`%sWHERE "%s"=:%s;`, query, model.GetPK(), model.GetPK())
+
+	return query
+}
+
 // BuildBulkInsert .
 func (b *Builder) BuildBulkInsert(model IModel, data []interface{}, returning ...string) string {
 	var query string
@@ -347,6 +358,26 @@ func (b *Builder) buildInsertValue(query string, column string, hasComma bool) (
 	}
 
 	return fmt.Sprintf(`%s:%s`, query, column), hasComma
+}
+
+func (b *Builder) buildUpdateValue(model IModel) string {
+	var query string
+
+	columns := model.GetColumns(model)
+
+	if model.IsTimestamp() {
+		columns = append(columns, "updated_at")
+	}
+
+	for i, v := range columns {
+		if i == len(columns)-1 {
+			query = fmt.Sprintf(`%s"%s"=:%s `, query, v, v)
+		} else {
+			query = fmt.Sprintf(`%s"%s"=:%s, `, query, v, v)
+		}
+	}
+
+	return query
 }
 
 func (b *Builder) buildInsertBulkValue(query string, model IModel, i int) string {
