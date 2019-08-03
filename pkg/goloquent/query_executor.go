@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -107,11 +106,9 @@ func (q *Query) Insert(returning ...string) (interface{}, error) {
 
 	query := q.Builder.BuildInsert(q.Model, returning...)
 
-	payload := q.Model.MapToPayload(q.Model)
+	q.Model.SetCreated()
 
-	if q.Model.IsTimestamp() {
-		payload[CREATED_AT] = time.Now()
-	}
+	payload := q.Model.MapToPayload(q.Model)
 
 	if nil != q.Tx {
 		result, err = q.Tx.NamedQuery(query, payload)
@@ -132,10 +129,35 @@ func (q *Query) Update() (bool, error) {
 
 	query := q.Builder.BuildUpdate(q.Model)
 
+	q.Model.SetUpdated()
+
 	payload := q.Model.MapToPayload(q.Model)
 
-	if q.Model.IsTimestamp() {
-		payload[UPDATED_AT] = time.Now()
+	if nil != q.Tx {
+		_, err = q.Tx.NamedQuery(query, payload)
+	} else {
+		_, err = q.DB.NamedQuery(query, payload)
+	}
+
+	if nil != err {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// Delete .
+func (q *Query) Delete() (bool, error) {
+	var err error
+
+	query := q.Builder.BuildDelete(q.Model, nil)
+
+	payload := q.Model.MapToPayload(q.Model)
+
+	if q.Model.IsSoftDelete() {
+		q.Model.SetDeleted()
+
+		return q.Update()
 	}
 
 	if nil != q.Tx {

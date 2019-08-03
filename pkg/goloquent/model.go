@@ -16,6 +16,10 @@ type IModel interface {
 	IsTimestamp() bool
 	IsSoftDelete() bool
 	MapToPayload(v IModel) map[string]interface{}
+
+	SetCreated()
+	SetUpdated()
+	SetDeleted()
 }
 
 // Model .
@@ -131,4 +135,31 @@ func (m *Model) MapToPayload(v IModel) map[string]interface{} {
 	}
 
 	return payload
+}
+
+// SetCreated .
+func (m *Model) SetCreated() {
+	if m.IsTimestamp() {
+		now := time.Now()
+
+		m.CreatedAt = &now
+	}
+}
+
+// SetUpdated .
+func (m *Model) SetUpdated() {
+	if m.IsTimestamp() {
+		now := time.Now()
+
+		m.UpdatedAt = &now
+	}
+}
+
+// SetDeleted .
+func (m *Model) SetDeleted() {
+	if m.IsSoftDelete() {
+		now := time.Now()
+
+		m.DeletedAt = &now
+	}
 }

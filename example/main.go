@@ -22,7 +22,9 @@ func main() {
 
 	// insertSample2()
 
-	updateSample()
+	// updateSample()
+
+	// deleteSample()
 
 	// selectSample()
 }
@@ -208,6 +210,23 @@ func updateSample() {
 	}
 
 	fmt.Println(isUpdated)
+}
+
+func deleteSample() {
+	query := goloquent.DB(config.GetDB())
+
+	genre, err := query.Use(model.GenreModel()).First()
+
+	if nil != err {
+		fmt.Println(err)
+		return
+	}
+
+	v := genre.(*model.Genre)
+
+	isDeleted, err := query.Use(v).Delete()
+
+	fmt.Println(isDeleted)
 }
 
 func selectSample() {

@@ -181,6 +181,21 @@ func (b *Builder) BuildUpdate(model IModel) string {
 	return query
 }
 
+// BuildDelete .
+func (b *Builder) BuildDelete(model IModel, conditions []*Condition) string {
+	var query string
+
+	query = fmt.Sprintf("%sDELETE FROM %s ", query, model.GetTableName())
+
+	if len(conditions) == 0 {
+		query = fmt.Sprintf(`%sWHERE "%s"=:%s;`, query, model.GetPK(), model.GetPK())
+	} else {
+		query = fmt.Sprintf("%sWHERE %s;", query, b.buildQueryCondition(model.GetTableName(), conditions))
+	}
+
+	return query
+}
+
 // BuildBulkInsert .
 func (b *Builder) BuildBulkInsert(model IModel, data []interface{}, returning ...string) string {
 	var query string
